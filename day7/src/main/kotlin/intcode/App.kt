@@ -3,6 +3,14 @@
  */
 package intcode
 
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import java.util.concurrent.LinkedBlockingDeque
+import java.util.function.Consumer
+import java.util.function.Supplier
+import kotlin.coroutines.CoroutineContext
+
 // There is one extra '23' in PART1 instructions. No idea if it was there originally, or if I added
 // it by accident. However it produces correct output for all provided tests, and problem part 1.
 // It just produces wrong output for PART2.  Figuring that out was "fun" :D
@@ -23,6 +31,7 @@ val BIGSAMPLE = IntcodeComputer(3, 21, 1008, 21, 8, 20, 1005, 20, 22, 107, 8, 21
 val AMPLIFIER_SOURCE = arrayOf(3, 8, 1001, 8, 10, 8, 105, 1, 0, 0, 21, 42, 67, 88, 101, 114, 195, 276, 357, 438, 99999, 3, 9, 101, 3, 9, 9, 1002, 9, 4, 9, 1001, 9, 5, 9, 102, 4, 9, 9, 4, 9, 99, 3, 9, 1001, 9, 3, 9, 1002, 9, 2, 9, 101, 2, 9, 9, 102, 2, 9, 9, 1001, 9, 5, 9, 4, 9, 99, 3, 9, 102, 4, 9, 9, 1001, 9, 3, 9, 102, 4, 9, 9, 101, 4, 9, 9, 4, 9, 99, 3, 9, 101, 2, 9, 9, 1002, 9, 3, 9, 4, 9, 99, 3, 9, 101, 4, 9, 9, 1002, 9, 5, 9, 4, 9, 99, 3, 9, 102, 2, 9, 9, 4, 9, 3, 9, 1001, 9, 1, 9, 4, 9, 3, 9, 101, 1, 9, 9, 4, 9, 3, 9, 1001, 9, 1, 9, 4, 9, 3, 9, 101, 1, 9, 9, 4, 9, 3, 9, 1002, 9, 2, 9, 4, 9, 3, 9, 101, 1, 9, 9, 4, 9, 3, 9, 1002, 9, 2, 9, 4, 9, 3, 9, 102, 2, 9, 9, 4, 9, 3, 9, 1002, 9, 2, 9, 4, 9, 99, 3, 9, 102, 2, 9, 9, 4, 9, 3, 9, 1002, 9, 2, 9, 4, 9, 3, 9, 1001, 9, 1, 9, 4, 9, 3, 9, 1002, 9, 2, 9, 4, 9, 3, 9, 1002, 9, 2, 9, 4, 9, 3, 9, 1001, 9, 2, 9, 4, 9, 3, 9, 1001, 9, 2, 9, 4, 9, 3, 9, 1001, 9, 2, 9, 4, 9, 3, 9, 1002, 9, 2, 9, 4, 9, 3, 9, 101, 1, 9, 9, 4, 9, 99, 3, 9, 102, 2, 9, 9, 4, 9, 3, 9, 1002, 9, 2, 9, 4, 9, 3, 9, 1001, 9, 2, 9, 4, 9, 3, 9, 102, 2, 9, 9, 4, 9, 3, 9, 1001, 9, 2, 9, 4, 9, 3, 9, 101, 2, 9, 9, 4, 9, 3, 9, 1001, 9, 1, 9, 4, 9, 3, 9, 101, 1, 9, 9, 4, 9, 3, 9, 101, 2, 9, 9, 4, 9, 3, 9, 1001, 9, 1, 9, 4, 9, 99, 3, 9, 102, 2, 9, 9, 4, 9, 3, 9, 101, 1, 9, 9, 4, 9, 3, 9, 1001, 9, 1, 9, 4, 9, 3, 9, 101, 1, 9, 9, 4, 9, 3, 9, 101, 1, 9, 9, 4, 9, 3, 9, 101, 1, 9, 9, 4, 9, 3, 9, 1001, 9, 2, 9, 4, 9, 3, 9, 101, 2, 9, 9, 4, 9, 3, 9, 1002, 9, 2, 9, 4, 9, 3, 9, 1001, 9, 1, 9, 4, 9, 99, 3, 9, 1001, 9, 2, 9, 4, 9, 3, 9, 102, 2, 9, 9, 4, 9, 3, 9, 1002, 9, 2, 9, 4, 9, 3, 9, 1002, 9, 2, 9, 4, 9, 3, 9, 1002, 9, 2, 9, 4, 9, 3, 9, 1002, 9, 2, 9, 4, 9, 3, 9, 1002, 9, 2, 9, 4, 9, 3, 9, 1002, 9, 2, 9, 4, 9, 3, 9, 101, 2, 9, 9, 4, 9, 3, 9, 101, 2, 9, 9, 4, 9, 99)
 
 fun main() {
+    /*
     JUMPTEST_IMMEDIATE.execute({ -999 }, { println("jumptest_immediate in=-999; expected=1; result=$it") })
     JUMPTEST_IMMEDIATE.execute({ 1 }, { println("jumptest_immediate in=1; expected=1; result=$it") })
     JUMPTEST_IMMEDIATE.execute({ 0 }, { println("jumptest_immediate in=0; expected=0; result=$it") })
@@ -38,75 +47,135 @@ fun main() {
 
     DAY5_PART2.execute(input = { 1 }, output = verify("Day5 / part1", 13933662))
     DAY5_PART2.execute(input = { 5 }, output = verify("Day5 / part2", 2369720))
+    */
 
-    findAmplifierConfiguration(arrayOf(3, 15, 3, 16, 1002, 16, 10, 16, 1, 16, 15, 15, 4, 15, 99, 0, 0), "sample_1")
-    findAmplifierConfiguration(AMPLIFIER_SOURCE, "production")
+    findAmplifierConfiguration(AMPLIFIER_SOURCE, listOf(0, 1, 2, 3, 4), "Day7 / part1")
+    findAmplifierConfiguration(AMPLIFIER_SOURCE, listOf(5, 6, 7, 8, 9), "Day7 / part2")
 }
 
-fun findAmplifierConfiguration(amplifierSource: Array<Int>, label: String, debug: Boolean = false) {
+fun findAmplifierConfiguration(amplifierSource: Array<Int>,
+                               phaseConfigValues: List<Int>,
+                               label: String = " ",
+                               debug: Boolean = false) {
 
     val results: MutableMap<Int, AmpArrayConfig> = mutableMapOf()
 
-    for (a in 0 until 5) {
-        for (b in 0 until 5) {
-            if (b == a) continue;
-            for (c in 0 until 5) {
-                if (c in setOf(a, b)) continue
-                for (d in 0 until 5) {
-                    if (d in setOf(a,b,c)) continue
-                    for (e in 0 until 5) {
-                        if (e in setOf(a,b,c,d)) continue
-                        IntcodeComputer(amplifierSource.clone()).execute(
-                                input = streamOf(a, 0),
-                                output = ampConnection(amplifierSource, b,
-                                                ampConnection(amplifierSource, c,
-                                                        ampConnection(amplifierSource, d,
-                                                                ampConnection(amplifierSource, e) {
-                                                                    val ampArrayConfig = AmpArrayConfig(a, b, c, d, e)
-                                                                    if (debug) println("$label :: $ampArrayConfig -> $it")
-                                                                    results[it] = ampArrayConfig
-                                                                })))
-                        )
+    val initialPhaseConfigs: List<AmpArrayConfig> = phaseConfigValues.permute().map {
+        AmpArrayConfig(it[0], it[1], it[2], it[3], it[4])
+    }
+
+    for (config in initialPhaseConfigs) {
+
+
+        println("Trying $config")
+
+        val connectAtoB = AmpCon("A->B")
+        val connectBtoC = AmpCon("B->C")
+        val connectCtoD = AmpCon("C->D")
+        val connectDtoE = AmpCon("D->E")
+        val connectEtoA = AmpCon("E->A")
+
+        connectEtoA.accept(config.a)
+        connectEtoA.accept(0)
+
+        connectAtoB.accept(config.b)
+        connectBtoC.accept(config.c)
+        connectCtoD.accept(config.d)
+        connectDtoE.accept(config.e)
+
+        var foo: Int? = null
+
+        val a = Thread( {
+            IntcodeComputer("AMP_A", amplifierSource.clone()).execute(
+                    input = connectEtoA::get,
+                    output = connectAtoB::accept
+            )
+        }, "AMP_A")
+
+        val b = Thread( {
+            IntcodeComputer("AMP_B", amplifierSource.clone()).execute(
+                    input = connectAtoB::get,
+                    output = connectBtoC::accept
+            )
+        }, "AMP_B")
+
+        val c = Thread( {
+            IntcodeComputer("AMP_C", amplifierSource.clone()).execute(
+                    input = connectBtoC::get,
+                    output = connectCtoD::accept
+            )
+        }, "AMP_C")
+
+        val d = Thread( {
+            IntcodeComputer("AMP_D", amplifierSource.clone()).execute(
+                    input = connectCtoD::get,
+                    output = connectDtoE::accept
+            )
+        }, "AMP_D")
+
+        val e = Thread( {
+            IntcodeComputer("AMP_E", amplifierSource.clone()).execute(
+                    input = connectDtoE::get,
+                    output = {
+                        connectEtoA.accept(it)
+                        foo = it;
                     }
-                }
-            }
-        }
+            )
+        }, "AMP_E")
+
+        a.start()
+        b.start()
+        c.start()
+        d.start()
+        e.start()
+
+        e.join()
+
+        results.put(foo!!, config)
     }
 
     val maxValue = results.keys.max()
-
     println("$label :: Amp maximizing configuration: ${results[maxValue]} -> $maxValue")
 }
 
-data class AmpArrayConfig(val a: Int, val b: Int, val c: Int, val d: Int, val e: Int) {
-    init {
-        assert(a in (0 until 5))
-        assert(b in (0 until 5))
-        assert(c in (0 until 5))
-        assert(d in (0 until 5))
-        assert(e in (0 until 5))
+class AmpCon(val label: String) : Supplier<Int>, Consumer<Int> {
+    private val values: LinkedBlockingDeque<Int> = LinkedBlockingDeque()
+    override fun get(): Int {
+        val value = values.take()
+        println("$label :: get() -> $value")
+        return value
     }
 
-    val joined by lazy { a * 10000 + b * 1000 + c * 100 + d * 10 + e }
+    override fun accept(t: Int) {
+        println("$label :: accept($t)")
+        values.add(t)
+    }
+}
 
+data class AmpArrayConfig(val a: Int, val b: Int, val c: Int, val d: Int, val e: Int) {
     override fun toString(): String {
         return "Confguration(a=$a, b=$b, c=$c, d=$d, e=$e)"
     }
 }
 
-
-private fun ampConnection(source: Array<Int>, phaseConfiguration: Int, output: (Int) -> Unit): (Int) -> Unit =
-        {
-            IntcodeComputer(source.clone()).execute(
-                    input = streamOf(phaseConfiguration, it),
-                    output = output)
-        }
-
-fun streamOf(vararg n: Int): () -> Int {
+/*
+fun streamOf(label: String, vararg n: Int): () -> Int {
     val iter = n.iterator()
-    return { iter.nextInt() }
-
+    return { iter.next() }
 }
+
+fun streamOf(label: String, vararg n: Int, con: AmpCon): () -> Int {
+    val iter = n.iterator()
+    return {
+        println("$label :: foo")
+        synchronized(iter) {
+            val providing = if (iter.hasNext()) iter.next() else con.get()
+            println("$label :: providing $providing")
+            providing
+        }
+    }
+}
+*/
 
 private fun verify(message: String = "", expected: Int): (Int) -> Unit = {
     print("$message ::: $it")

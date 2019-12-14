@@ -12,7 +12,7 @@ private enum class ParamMode {
 class Opcode(val opcode: Int) {
     val op: Int by lazy { opcode % 100 }
 
-    fun toOperation(mem: Array<Int>, ctr: Int): Operation {
+    fun toOperation(mem: Array<Int>, ctr: Int, input: () -> Int, output: (Int) -> Unit): Operation {
         return when (this.op) {
             1 -> Add(
                     accessParam(mem, ctr, 1),
@@ -25,10 +25,12 @@ class Opcode(val opcode: Int) {
                     accessParam(mem, ctr, 3)
             )
             3 -> InputToMemory(
-                    accessParam(mem, ctr, 1)
+                    accessParam(mem, ctr, 1),
+                    input
             )
             4 -> MemoryToOutput(
-                    accessParam(mem, ctr, 1)
+                    accessParam(mem, ctr, 1),
+                    output
             )
             5 -> JumpIfTrue(
                     accessParam(mem, ctr,1),

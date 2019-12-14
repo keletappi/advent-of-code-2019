@@ -4,13 +4,17 @@ import intcode.ops.*
 import java.lang.Exception
 import java.lang.UnsupportedOperationException
 
-private lateinit var readInput: () -> Int
-private lateinit var writeOuput: (Int) -> Unit
 
-class IntcodeComputer( val memory: Array<Int> ) {
-    constructor(vararg params: Int) : this(params.toTypedArray())
+class IntcodeComputer(
+        val name: String = "",
+        val memory: Array<Int> ) {
+    constructor(vararg params: Int) : this("IntcodeComputer", params.toTypedArray())
+    constructor(name: String, vararg params: Int) : this(name, params.toTypedArray())
 
-    fun execute(input: () -> Int = { throw UnsupportedOperationException("No input defined") },
+    private lateinit var readInput: () -> Int
+    private lateinit var writeOuput: (Int) -> Unit
+
+    fun execute(input: () -> Int = { throw UnsupportedOperationException("$name :: No input defined") },
                 output: (Int) -> Unit = { println(it) },
                 debug: Boolean = false) {
         readInput = input
@@ -25,16 +29,17 @@ class IntcodeComputer( val memory: Array<Int> ) {
         try {
             while (true) {
                 val opcode = Opcode(mem[ctr])
-                val operation = opcode.toOperation(mem, ctr)
-                if (debug) println("$ctr ::: ${runtimeDump(mem, ctr)} ::: $operation")
+                val operation = opcode.toOperation(mem, ctr, readInput, writeOuput)
+                if (debug) println("$name :: $ctr ::: ${runtimeDump(mem, ctr)} ::: $operation")
                 val nextInstructionFunction = operation.eval()
                 ctr = nextInstructionFunction(ctr)
             }
             //run(mem, operation.eval()(ctr))
         } catch (e: Halt) {
-            if (debug) println("HALT")
+            if (debug) println("\"$name :: HALT")
         } catch (e: Exception) {
-            println("Crash at op $ctr\nMemory content around op:\n${crashdump(mem, ctr)} \n$e");
+            println("$name :: Crash at op $ctr\nMemory content around op:\n${crashdump(mem, ctr)} \n$e");
+            throw e
         }
     }
 
@@ -52,15 +57,12 @@ class IntcodeComputer( val memory: Array<Int> ) {
 
     }
 
+
 }
 
-
-
-
-
-class InputToMemory(private val param: Param) : Operation {
+class InputToMemory(private val param: Param, private val input: () -> Int) : Operation {
     override fun eval(): (Int) -> Int {
-        param.write(readInput())
+        param.write(input())
         return { it + 2 }
     }
 
@@ -69,9 +71,9 @@ class InputToMemory(private val param: Param) : Operation {
     }
 }
 
-class MemoryToOutput(private val param: Param) : Operation {
+class MemoryToOutput(private val param: Param, private val output: (Int) -> Unit) : Operation {
     override fun eval(): (Int) -> Int {
-        writeOuput(param.read())
+        output(param.read())
         return { it + 2 }
     }
 
@@ -79,4 +81,3 @@ class MemoryToOutput(private val param: Param) : Operation {
         return "MTO(param=$param)"
     }
 }
-
