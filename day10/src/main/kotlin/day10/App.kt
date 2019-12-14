@@ -3,38 +3,62 @@
  */
 package day10
 
+import kotlin.math.PI
+import kotlin.math.atan2
 import kotlin.math.max
 import kotlin.math.sign
 
 fun main() {
-    checkMap(AsteroidMap(PART1_TEST_SIMPLE_8_AT_3_4))
-    checkMap(AsteroidMap(PART1_TEST_EXPECTING_210_AT_11_13))
-    checkMap(AsteroidMap(PART1_INPUT))
+    AsteroidMap(PART1_TEST_SIMPLE_8_AT_3_4).findBestScannerLocation().run { println("8 at 3,4 ? $this") }
+    AsteroidMap(PART1_TEST_EXPECTING_210_AT_11_13).findBestScannerLocation().run { println("210 at 11,13 ? $this") }
+
+    println("vaporize test for (8,3)")
+    vaporizeAsteroids(AsteroidMap(VAPORIZE_SAMPLE), 8, 3)
+
+    println("\n**** REAL DEAL ****\n")
+
+    val part1 = AsteroidMap(PART1_INPUT)
+    val scannerLoc = part1.findBestScannerLocation()
+    println("Part1 / scanner location: $scannerLoc")
+    vaporizeAsteroids(part1, scannerLoc.x, scannerLoc.y)
+
+}
+
+private fun vaporizeAsteroids(asteroidMap: AsteroidMap, x: Int, y: Int) {
+    var n = 0
+    while (asteroidMap.hasAsteroidsToVaporize()) {
+        asteroidMap.findVisibleAsteroids(x, y)
+                .map { Coord(it.first, it.second) }
+                .sortedByDescending {
+                    it.deg(x, y)
+                }.forEach {
+                    n++
+                    println("#$n :: $it  -> ${it.x * 100 + it.y}")
+                    asteroidMap.vaporize(it.x, it.y)
+                }
+    }
+}
+
+data class Coord(val x: Int, val y: Int) {
+    fun rad(x1: Int, y1: Int): Double {
+        val dx = x - x1
+        val dy = y - y1
+        // Using atan2 "wrong way" since positive y-axis should have angle of 0 deg
+        return atan2(dx.toDouble(), dy.toDouble())
+    }
+
+    fun deg(x1: Int, y1: Int): Double = rad(x1, y1) * 180 / PI
+
+    override fun toString(): String {
+        return "Foo(x=$x, y=$y, deg=${deg(8, 3)})"
+    }
+
 }
 
 data class Res(val x: Int, val y: Int, val n: Int) {
     override fun toString(): String {
         return "Res(x=$x, y=$y, n=$n)"
     }
-}
-
-private fun checkMap(map: AsteroidMap) {
-    val results: MutableList<Res> = mutableListOf()
-    for (y in 0 until map.h) {
-        for (x in 0 until map.w) {
-            if (map.isAsteroid(x, y)) {
-                results.add(Res(x, y, map.numVisibleAsteroids(x, y)))
-            }
-        }
-    }
-
-    /*
-    results.forEach {
-        println("$it")
-    }
-     */
-    results.maxBy { it.n }.run { println("$this") }
-
 }
 
 
@@ -47,31 +71,64 @@ class AsteroidMap(input: String) {
     val w by lazy { rows[0].length }
     val h by lazy { rows.size }
 
-    fun isAsteroid(x: Int, y: Int) = rows[y][x] == '#'
+    val vaporized: MutableList<Pair<Int, Int>> = mutableListOf()
+
+    fun isAsteroid(x: Int, y: Int) = (rows[y][x] == '#' && !vaporized.contains(x to y))
     fun onMap(x: Int, y: Int) = x in 0 until w && y in 0 until h
 
-    fun numVisibleAsteroids(x: Int, y: Int): Int {
+    fun hasAsteroidsToVaporize(): Boolean = numAsteroids() > 1
 
+    private fun numAsteroids(): Int {
+        var n = 0
+        for (x in 0 until w) {
+            for (y in 0 until h) {
+                if (isAsteroid(x, y)) n++
+            }
+        }
+        return n
+    }
+
+    fun findBestScannerLocation(): Res {
+        val results: MutableList<Res> = mutableListOf()
+        for (y in 0 until h) {
+            for (x in 0 until w) {
+                if (isAsteroid(x, y)) {
+                    results.add(Res(x, y, numVisibleAsteroids(x, y)))
+                }
+            }
+        }
+
+        return results.maxBy { it.n }!!
+    }
+
+    fun vaporize(x: Int, y: Int) {
+        vaporized.add(x to y)
+    }
+
+    fun numVisibleAsteroids(x: Int, y: Int): Int {
+        return findVisibleAsteroids(x, y).size
+    }
+
+    fun findVisibleAsteroids(x: Int, y: Int): MutableList<Pair<Int, Int>> {
         val validXIncrements = 1 until w - x
         val validYIncrements = 1 until h - y
         val validXDecrements = 1 until x + 1
         val validYDecrements = 1 until y + 1
         val validMoves: MutableList<Pair<Int, Int>> = mutableListOf()
 
-        validXIncrements.forEach { itX -> validYIncrements.forEach { itY -> validMoves.add(itX to itY) } }
-        validXIncrements.forEach { itX -> validYDecrements.forEach { itY -> validMoves.add(itX to -itY) } }
-        validXDecrements.forEach { itX -> validYIncrements.forEach { itY -> validMoves.add(-itX to itY) } }
-        validXDecrements.forEach { itX -> validYDecrements.forEach { itY -> validMoves.add(-itX to -itY) } }
-
-        validMoves.add(1 to 0)
-        validMoves.add(-1 to 0)
-        validMoves.add(0 to 1)
         validMoves.add(0 to -1)
+        validXIncrements.forEach { itX -> validYDecrements.reversed().forEach { itY -> validMoves.add(itX to -itY) } }
+        validMoves.add(1 to 0)
+        validXIncrements.forEach { itX -> validYIncrements.reversed().forEach { itY -> validMoves.add(itX to itY) } }
+        validMoves.add(0 to 1)
+        validXDecrements.forEach { itX -> validYIncrements.reversed().forEach { itY -> validMoves.add(-itX to itY) } }
+        validMoves.add(-1 to 0)
+        validXDecrements.forEach { itX -> validYDecrements.reversed().forEach { itY -> validMoves.add(-itX to -itY) } }
 
-        val visibleAsteroids: MutableSet<Pair<Int, Int>> = mutableSetOf()
+
+        val visibleAsteroids: MutableList<Pair<Int, Int>> = mutableListOf()
         val triedMoves: MutableList<Pair<Int, Int>> = mutableListOf()
         validMoves.forEach { move ->
-
             if (triedMoves.find
                     { tried ->
                         val sameSignX = tried.first.sign == move.first.sign
@@ -97,14 +154,20 @@ class AsteroidMap(input: String) {
 
             while (onMap(x_, y_)) {
                 if (isAsteroid(x_, y_)) {
-                    visibleAsteroids.add(x_ to y_)
+                    if (!visibleAsteroids.contains(x_ to y_)) {
+                        visibleAsteroids.add(x_ to y_)
+                    }
                     return@forEach
                 }
                 x_ += move.first
                 y_ += move.second
             }
         }
-        return visibleAsteroids.size
+        return visibleAsteroids
+    }
+
+    override fun toString(): String {
+        return rows.joinToString(separator = "\n")
     }
 
 }
