@@ -1,5 +1,7 @@
 package intcode
 
+import java.math.BigInteger
+
 infix fun Int.pow(n: Int): Int {
     assert (n >= 0)
     if (n == 0) return 1
@@ -22,3 +24,20 @@ fun <T> List<T>.permute(): List<List<T>> {
     }
     return perms
 }
+
+
+infix fun BigInteger.until(end: BigInteger?): Iterable<BigInteger> {
+    return object : Iterable<BigInteger> {
+        override fun iterator(): Iterator<BigInteger> {
+            var n = this@until
+            return object: Iterator<BigInteger> {
+                override fun hasNext(): Boolean = n < end
+                override fun next(): BigInteger = n++
+
+            }
+        }
+    }
+}
+
+operator fun BigInteger.plus(i: Int): BigInteger = this + i.toBigInteger()
+operator fun BigInteger.minus(i: Int): BigInteger = this - i.toBigInteger()

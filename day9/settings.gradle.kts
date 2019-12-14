@@ -7,8 +7,4 @@
  * in the user manual at https://docs.gradle.org/6.0.1/userguide/multi_project_builds.html
  */
 
-rootProject.name = 'advent-of-intcode'
-
-include 'intcode-computer',
-        'day1', 'day2', 'day3', 'day4', 'day5', 'day6', 'day7',
-        'day8', 'day9'
+rootProject.name = "day9"

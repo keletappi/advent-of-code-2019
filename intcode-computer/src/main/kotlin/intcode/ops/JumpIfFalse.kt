@@ -1,14 +1,15 @@
 package intcode.ops
 
 import intcode.Param
+import java.math.BigInteger
 
 class JumpIfFalse(private val condition: Param,
                   private val target: Param) : Operation {
-    override fun eval(): (Int) -> Int {
-        if (condition.read() == 0) {
+    override fun eval(): (BigInteger) -> BigInteger {
+        if (condition.read() == BigInteger.ZERO) {
             return { target.read() }
         } else {
-            return { it + 3 }
+            return { it + 3.toBigInteger() }
         }
     }
 

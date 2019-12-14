@@ -1,13 +1,17 @@
 package intcode.ops
 
 import intcode.Param
+import java.math.BigInteger
 
 class LessThan(private val a: Param,
                private val b: Param,
                private val result: Param) : Operation {
-    override fun eval(): (Int) -> Int {
-        result.write(if (a.read() < b.read()) 1 else 0)
-        return { it + 4 }
+    override fun eval(): (BigInteger) -> BigInteger {
+        val aVal = a.read()
+        val bVal = b.read()
+
+        result.write(if (aVal < bVal) BigInteger.ONE else BigInteger.ZERO)
+        return { it + 4.toBigInteger() }
     }
 
     override fun toString(): String {

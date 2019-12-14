@@ -1,37 +1,48 @@
 package intcode
 
-import java.lang.UnsupportedOperationException
+import java.math.BigInteger
 
-fun Array<Int>.reference(n: Int): Param = Reference(this[n], this)
-fun Array<Int>.immediate(n: Int): Param = Immediate(this[n])
+fun Array<BigInteger>.reference(addr: BigInteger): Param = Reference(this[addr.toInt()], this)
+fun Array<BigInteger>.immediate(addr: BigInteger): Param = Immediate(this[addr.toInt()])
+fun Array<BigInteger>.relative(addr: BigInteger, relativeBase: BigInteger): Param = Relative(this[addr.toInt()], relativeBase, this)
 
 interface Param {
-    fun read(): Int
-    fun write(newValue: Int)
+    fun read(): BigInteger
+    fun write(newValue: BigInteger)
 }
 
-class Reference(val addr: Int, val memory: Array<Int>) : Param {
-    override fun read(): Int = memory[addr]
-    override fun write(newValue: Int) {
-        // println("         Write $addr<-$newValue")
-        memory[addr] = newValue
+class Reference(val paramValue: BigInteger, val memory: Array<BigInteger>) : Param {
+    override fun read(): BigInteger = memory[paramValue.toInt()]
+    override fun write(newValue: BigInteger) {
+        memory[paramValue.toInt()] = newValue
     }
 
     override fun toString(): String {
-        return "ref($addr->${read()})"
+        return "ref($paramValue->${read()})"
     }
-
 }
 
-class Immediate(val value: Int) : Param {
-    override fun read(): Int = value
+class Relative(val paramValue: BigInteger, val relativeBase: BigInteger, val memory: Array<BigInteger>) : Param {
+    override fun read(): BigInteger = memory[(paramValue + relativeBase).toInt()]
 
-    override fun write(newValue: Int) {
+    override fun write(newValue: BigInteger) {
+        memory[(paramValue + relativeBase).toInt()] = newValue
+    }
+
+    override fun toString(): String {
+        return "rel(addr=$paramValue, rel=$relativeBase, ${paramValue + relativeBase}->${memory[(paramValue + relativeBase).toInt()]})"
+    }
+}
+
+class Immediate(val paramValue: BigInteger) : Param {
+    override fun read(): BigInteger = paramValue
+
+    override fun write(newValue: BigInteger) {
         throw UnsupportedOperationException("Writing to immediate parameter")
     }
 
     override fun toString(): String {
-        return "val($value)"
+        return "val($paramValue)"
     }
 
 }

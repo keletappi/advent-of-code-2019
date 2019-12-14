@@ -4,6 +4,8 @@
     <bytecodeTargetLevel>
       <module name="advent-of-intcode.intcode.main" target="11" />
       <module name="advent-of-intcode.intcode.test" target="11" />
+      <module name="advent-of-intcode.main" target="11" />
+      <module name="advent-of-intcode.test" target="11" />
     </bytecodeTargetLevel>
   </component>
 </project>
