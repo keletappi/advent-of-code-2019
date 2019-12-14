@@ -1,6 +1,6 @@
 package day6
 
-public val OrbitMap ="""
+val OrbitMap ="""
 PQK)Q5S
 8QF)BST
 7DY)PBP

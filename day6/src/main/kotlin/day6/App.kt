@@ -28,10 +28,10 @@ fun main() {
             .print()
 
 
-    val myCenter = celestialMassIndex["YOU"]!!.center.get()
+    val myCenter = celestialMassIndex["YOU"]!!.center!!
     val myCenters = myCenter.centers()
 
-    val santaCenter = celestialMassIndex["SAN"]!!.center.get()
+    val santaCenter = celestialMassIndex["SAN"]!!.center!!
     val santaCenters = santaCenter.centers()
 
     val firstCommon = myCenters.first { santaCenters.contains(it) }
@@ -56,30 +56,26 @@ private fun markDistance(mass: Mass, distance: Int) {
 
 
 class Mass(val tag: String) {
-    var center: Optional<Mass> = Optional.empty()
+    var center: Mass? = null
     val orbiters: MutableList<Mass> = mutableListOf()
 
     var distanceToCOM = 0
 
     fun addOrbiter(mass: Mass) {
         orbiters.add(mass)
-        mass.center = Optional.of(this)
+        mass.center = this
     }
 
     fun centers(): List<Mass> = centers(emptyList())
     private fun centers(list: List<Mass>): List<Mass> {
-        return if (center.isEmpty())
-            list
-        else
-            center.get().centers(list + listOf(center.get()))
+        return center?.centers(list + center!!) ?: list
 
     }
 
     fun distanceTo(target: Mass): Int {
-        if (center.isEmpty) throw RuntimeException("Not a parent")
-        val centerObj = center.get()
-        if (centerObj == target) return 1;
-        return centerObj.distanceTo(target) + 1
+        if (center == null) throw RuntimeException("Not a parent")
+        if (center == target) return 1;
+        return center!!.distanceTo(target) + 1
     }
 
     override fun toString(): String {

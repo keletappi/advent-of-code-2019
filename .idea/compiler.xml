@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <bytecodeTargetLevel>
+      <module name="advent-of-intcode.intcode.main" target="11" />
+      <module name="advent-of-intcode.intcode.test" target="11" />
+    </bytecodeTargetLevel>
+  </component>
+</project>
