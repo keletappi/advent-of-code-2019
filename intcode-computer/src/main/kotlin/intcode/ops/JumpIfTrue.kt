@@ -6,7 +6,7 @@ import java.math.BigInteger
 class JumpIfTrue(private val condition: Param,
                  private val target: Param) : Operation {
     override fun eval(): (BigInteger) -> BigInteger {
-        if (condition.read() == BigInteger.ONE) {
+        if (condition.read() != BigInteger.ZERO) {
             return { target.read() }
         } else {
             return { it + 3.toBigInteger() }
