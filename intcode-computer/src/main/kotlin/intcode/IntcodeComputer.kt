@@ -4,8 +4,6 @@ import intcode.ops.Halt
 import intcode.ops.Opcode
 import java.math.BigInteger
 import java.math.BigInteger.ZERO
-import kotlin.math.min
-import kotlin.math.max
 
 
 class IntcodeComputer(
@@ -24,6 +22,17 @@ class IntcodeComputer(
             input = { input().toBigInteger() },
             output = { output(it.toInt()) }
     )
+
+    constructor(name: String = "intcode-computer",
+                source: String,
+                input: () -> BigInteger = { throw UnsupportedOperationException("$name :: No input defined") },
+                output: (Int) -> Unit = { println(it) }
+    ) : this(name,
+            source.parseSource(),
+            input = { input() },
+            output = { output(it.toInt()) }
+    )
+
 
     private var relativeBase = RelativeBase()
     private val memory: Array<BigInteger> = Array(64000) { ZERO }
@@ -71,3 +80,9 @@ class RelativeBase(initial: BigInteger = ZERO) {
         return "RelativeBase(value=$value)"
     }
 }
+
+private fun String.parseSource(): Array<BigInteger> =
+        this.split(",")
+                .map(String::trim)
+                .map(::BigInteger)
+                .toTypedArray()

@@ -16,14 +16,14 @@ fun main() {
 
 fun runBOOST() {
     println("Day 9 / part 2 :: BOOST sensors")
-    IntcodeComputer(source = BOOST_SOURCE.parse(),
+    IntcodeComputer(source = BOOST_SOURCE,
             input = { BigInteger.TWO }).execute()
     println("Day 9 / part 2 :: BOOST sensors done")
 }
 
 fun testBOOST() {
     println("Day 9 / part 1 :: BOOST test")
-    IntcodeComputer(source = BOOST_SOURCE.parse(),
+    IntcodeComputer(source = BOOST_SOURCE,
             input = { BigInteger.ONE }).execute()
     println("Day 9 / part 1 :: BOOST test done")
 }
@@ -31,24 +31,19 @@ fun testBOOST() {
 fun testCopyOfSelf() {
     val s = "109,1,204,-1,1001,100,1,100,1008,100,16,101,1006,101,0,99"
     println("self-producing code : $s")
-    IntcodeComputer(source = s.parse()).execute()
+    IntcodeComputer(source = s).execute()
     println("...done")
 }
 
 fun testBigNumber2() {
     println("Expecting NNNNNNNNNNNNNNNN")
     print("   result ")
-    IntcodeComputer(source = "1102,34915192,34915192,7,4,7,99,0".parse()).execute()
+    IntcodeComputer(source = "1102,34915192,34915192,7,4,7,99,0").execute()
 }
 
 private fun testBigNumber() {
     println("Expecting 1125899906842624")
     print("   result ")
-    IntcodeComputer(source = "104,1125899906842624,99".parse()).execute()
+    IntcodeComputer(source = "104,1125899906842624,99").execute()
 }
 
-fun String.parse(): Array<BigInteger> =
-        this.split(",")
-                .map(String::trim)
-                .map(::BigInteger)
-                .toTypedArray()
