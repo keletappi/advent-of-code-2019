@@ -25,9 +25,9 @@ fun main() {
             },
             output = {
                 if (outputValueIsColor) {
-                    panel[location] = Col.fromIO(it)
+                    panel[location] = Col.fromIO(it.toInt())
                 } else {
-                    facing = facing.turn(TurnDirection.fromIO(it))
+                    facing = facing.turn(TurnDirection.fromIO(it.toInt()))
                     location = facing.move(location)
                 }
                 outputValueIsColor = !outputValueIsColor

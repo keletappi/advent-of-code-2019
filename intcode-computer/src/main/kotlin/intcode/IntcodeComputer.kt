@@ -26,13 +26,12 @@ class IntcodeComputer(
     constructor(name: String = "intcode-computer",
                 source: String,
                 input: () -> BigInteger = { throw UnsupportedOperationException("$name :: No input defined") },
-                output: (Int) -> Unit = { println(it) }
+                output: (BigInteger) -> Unit = { println(it) }
     ) : this(name,
             source.parseSource(),
             input = { input() },
-            output = { output(it.toInt()) }
+            output = { output(it) }
     )
-
 
     private var relativeBase = RelativeBase()
     private val memory: Array<BigInteger> = Array(64000) { ZERO }
