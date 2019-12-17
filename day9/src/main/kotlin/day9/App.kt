@@ -17,7 +17,7 @@ fun main() {
 fun runBOOST() {
     println("Day 9 / part 2 :: BOOST sensors")
     IntcodeComputer(source = BOOST_SOURCE,
-            input = { BigInteger.TWO }).execute()
+            input = { 2.toBigInteger() }).execute()
     println("Day 9 / part 2 :: BOOST sensors done")
 }
 
